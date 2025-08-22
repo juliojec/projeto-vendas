@@ -1,0 +1,62 @@
+groups:
+  - name: vendas-api-alerts
+    rules:
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_server_requests_duration_seconds_bucket{job="vendas-api"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: vendas-api
+        annotations:
+          summary: "Alto tempo de resposta na API de vendas"
+          description: "O tempo de resposta P95 está acima de 2s por mais de 5 minutos"
+
+      - alert: HighErrorRate
+        expr: rate(http_server_requests_total{job="vendas-api",status=~"5.."}[5m]) / rate(http_server_requests_total{job="vendas-api"}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          service: vendas-api
+        annotations:
+          summary: "Alta taxa de erro na API de vendas"
+          description: "Taxa de erro acima de 5% por mais de 2 minutos"
+
+      - alert: HighCPUUsage
+        expr: system_cpu_usage{job="vendas-api"} > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: vendas-api
+        annotations:
+          summary: "Alto uso de CPU"
+          description: "Uso de CPU acima de 80% por mais de 10 minutos"
+
+      - alert: HighMemoryUsage
+        expr: jvm_memory_used_bytes{job="vendas-api",area="heap"} / jvm_memory_max_bytes{job="vendas-api",area="heap"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: vendas-api
+        annotations:
+          summary: "Alto uso de memória heap"
+          description: "Uso de memória heap acima de 85% por mais de 5 minutos"
+
+      - alert: ApplicationDown
+        expr: up{job="vendas-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: vendas-api
+        annotations:
+          summary: "API de vendas está inativa"
+          description: "A aplicação não está respondendo"
+
+      - alert: HighCancellationRate
+        expr: rate(vendas_canceladas_total[5m]) > 10
+        for: 3m
+        labels:
+          severity: warning
+          service: vendas-api
+        annotations:
+          summary: "Alta taxa de cancelamento de vendas"
+          description: "Mais de 10 vendas canceladas por minuto nos últimos 3 minutos"

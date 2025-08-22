@@ -1,0 +1,167 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "name": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "fillOpacity": 10
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "name": "Prometheus"
+          },
+          "expr": "histogram_quantile(0.95, rate(repository_method_time_seconds_bucket{job=\"vendas-api\"}[5m]))",
+          "legendFormat": "{{repository}}.{{method}} P95",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "name": "Prometheus"
+          },
+          "expr": "histogram_quantile(0.50, rate(repository_method_time_seconds_bucket{job=\"vendas-api\"}[5m]))",
+          "legendFormat": "{{repository}}.{{method}} P50",
+          "refId": "B"
+        }
+      ],
+      "title": "Repository - Tempo de Métodos",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "name": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "fillOpacity": 10
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "name": "Prometheus"
+          },
+          "expr": "histogram_quantile(0.95, rate(service_method_time_seconds_bucket{job=\"vendas-api\"}[5m]))",
+          "legendFormat": "{{service}}.{{method}} P95",
+          "refId": "A"
+        }
+      ],
+      "title": "Service - Tempo de Métodos",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "name": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "red", "value": 0.1}
+            ]
+          }
+        }
+      },
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 8},
+      "id": 3,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "name": "Prometheus"
+          },
+          "expr": "rate(repository_errors_total{job=\"vendas-api\"}[1m])",
+          "legendFormat": "{{repository}}.{{method}} - {{error}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "name": "Prometheus"
+          },
+          "expr": "rate(service_errors_total{job=\"vendas-api\"}[1m])",
+          "legendFormat": "{{service}}.{{method}} - {{error}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Taxa de Erros por Segundo",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "name": "Prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14},
+      "id": 4,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "name": "Prometheus"
+          },
+          "expr": "repository_method_time_seconds{job=\"vendas-api\"}",
+          "legendFormat": "{{repository}}.{{method}} - {{table}}.{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Database Query Times",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["performance", "gargalos"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Performance e Gargalos - Vendas API",
+  "uid": "performance-dash-001",
+  "version": 1,
+  "weekStart": ""
+}
