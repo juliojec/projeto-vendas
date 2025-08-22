@@ -10,8 +10,13 @@ import com.projeto.vendas.infrastructure.events.VendaEvents;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -78,6 +83,28 @@ class VendaServiceTest {
 
         VendaResponseDto dto = vendaService.buscarPorNumero("VD-123");
         assertNotNull(dto);
+    }
+
+    @Test
+    void listarVendas_deveRetornarPaginaDeVendas() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Venda venda = vendaMock();
+        VendaResponseDto dto = vendaResponseMock();
+
+        Page<Venda> pageMock = new PageImpl<>(Collections.singletonList(venda));
+        when(vendaRepository.findAll(pageable)).thenReturn(pageMock);
+
+        when(vendaMapper.toDto(venda)).thenReturn(dto);
+
+        Page<VendaResponseDto> response = vendaService.listarVendas(pageable);
+
+        assertNotNull(response);
+        assertEquals(1, response.getTotalElements());
+        assertSame(dto, response.getContent().get(0));
+
+        verify(vendaRepository, times(1)).findAll(pageable);
+        verify(vendaMapper, times(1)).toDto(venda);
     }
 
     @Test
