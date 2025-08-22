@@ -3,7 +3,7 @@ spring:
     name: vendas-api
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/vendas
+    url: jdbc:postgresql://vendas-api:5432/vendas
     username: vendas_user
     password: vendas_password
     driver-class-name: org.postgresql.Driver
