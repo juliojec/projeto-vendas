@@ -6,10 +6,15 @@ import com.projeto.vendas.domain.services.VendaService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -56,6 +61,23 @@ class VendasControllerTest {
     }
 
     @Test
+    void listarVendas_deveRetornarOk() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<VendaResponseDto> pageMock = new PageImpl<>(Collections.singletonList(vendaMock()));
+
+        when(vendaService.listarVendas(pageable)).thenReturn(pageMock);
+
+        ResponseEntity<Page<VendaResponseDto>> response = controller.listarVendas(pageable);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(1, response.getBody().getTotalElements());
+        assertEquals("VD-123", response.getBody().getContent().get(0).numeroVenda());
+
+        verify(vendaService, times(1)).listarVendas(pageable);
+    }
+
+    @Test
     void buscarVenda_deveRetornarOk() {
         when(vendaService.buscarPorNumero("VD-123")).thenReturn(vendaMock());
 
@@ -74,4 +96,20 @@ class VendasControllerTest {
         assertEquals(200, response.getStatusCodeValue());
         assertEquals("VD-123", response.getBody().numeroVenda());
     }
+
+    @Test
+    void cancelarItem_deveRetornarOk() {
+        Long itemId = 1L;
+        String numeroVenda = "VD-123";
+
+        when(vendaService.cancelarItem(numeroVenda, itemId)).thenReturn(vendaMock());
+
+        ResponseEntity<VendaResponseDto> response = controller.cancelarItem(numeroVenda, itemId);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("VD-123", response.getBody().numeroVenda());
+
+        verify(vendaService, times(1)).cancelarItem(numeroVenda, itemId);
+    }
+
 }
