@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -55,6 +56,32 @@ class PerformanceAspectTest {
     }
 
     @Test
+    void monitorRepository_deveIncrementarCounterQuandoLancarException() throws Throwable {
+        Object targetObject = new Object();
+        when(joinPoint.getTarget()).thenReturn(targetObject);
+
+        Signature signature = mock(Signature.class);
+        when(signature.getName()).thenReturn("findAll");
+        when(joinPoint.getSignature()).thenReturn(signature);
+
+        when(joinPoint.proceed()).thenThrow(new RuntimeException("Erro de teste"));
+
+        Timer.Sample sample = mock(Timer.Sample.class);
+        when(metricsService.startTimer()).thenReturn(sample);
+
+        assertThrows(RuntimeException.class, () -> aspect.monitorRepository(joinPoint));
+
+        verify(metricsService, times(1)).incrementCounter(
+                eq("repository_errors"),
+                any(String[].class));
+
+        verify(metricsService, times(1)).stopTimer(
+                eq(sample),
+                eq("repository_method_time"),
+                any(String[].class));
+    }
+
+    @Test
     void deveMonitorarService_comSucesso() throws Throwable {
         when(joinPoint.proceed()).thenReturn("ok");
 
@@ -65,6 +92,31 @@ class PerformanceAspectTest {
         assert result.equals("ok");
     }
 
+    @Test
+    void monitorService_deveIncrementarCounterQuandoLancarException() throws Throwable {
+        Object targetObject = new Object();
+        when(joinPoint.getTarget()).thenReturn(targetObject);
+
+        Signature signature = mock(Signature.class);
+        when(signature.getName()).thenReturn("criarVenda");
+        when(joinPoint.getSignature()).thenReturn(signature);
+
+        when(joinPoint.proceed()).thenThrow(new RuntimeException("Erro de teste"));
+
+        Timer.Sample sample = mock(Timer.Sample.class);
+        when(metricsService.startTimer()).thenReturn(sample);
+
+        assertThrows(RuntimeException.class, () -> aspect.monitorService(joinPoint));
+
+        verify(metricsService, times(1)).incrementCounter(
+                eq("service_errors"),
+                any(String[].class));
+
+        verify(metricsService, times(1)).stopTimer(
+                eq(sample),
+                eq("service_method_time"),
+                any(String[].class));
+    }
 
     @Test
     void deveMonitorarController_comSucesso() throws Throwable {
@@ -75,6 +127,32 @@ class PerformanceAspectTest {
         verify(metricsService).stopTimer(eq(sample), eq("controller_method_time"),
                 any(), any(), any(), any());
         assert result.equals("ok");
+    }
+
+    @Test
+    void monitorController_deveIncrementarCounterQuandoLancarException() throws Throwable {
+        Object targetObject = new Object();
+        when(joinPoint.getTarget()).thenReturn(targetObject);
+
+        Signature signature = mock(Signature.class);
+        when(signature.getName()).thenReturn("criarVenda");
+        when(joinPoint.getSignature()).thenReturn(signature);
+
+        when(joinPoint.proceed()).thenThrow(new RuntimeException("Erro de teste"));
+
+        Timer.Sample sample = mock(Timer.Sample.class);
+        when(metricsService.startTimer()).thenReturn(sample);
+
+        assertThrows(RuntimeException.class, () -> aspect.monitorController(joinPoint));
+
+        verify(metricsService, times(1)).incrementCounter(
+                eq("controller_errors"),
+                any(String[].class));
+
+        verify(metricsService, times(1)).stopTimer(
+                eq(sample),
+                eq("controller_method_time"),
+                any(String[].class));
     }
 
 }
