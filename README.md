@@ -63,6 +63,10 @@ docker-compose up -d
 | `/actuator/prometheus` | Métricas formato Prometheus |
 | `/actuator/info` | Informações da aplicação |
 
+### **Cobertura de Testes**
+
+![Cobertura JaCoCo](docs/img/cobertura.jpg)
+
 ## Dashboards & Métricas
 
 ### **Grafana Dashboards Inclusos:**

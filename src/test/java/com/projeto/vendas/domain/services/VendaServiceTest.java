@@ -76,6 +76,28 @@ class VendaServiceTest {
     }
 
     @Test
+    void criarVenda_semItens_deveLancarException() {
+        var cliente = new ClientExternalDto("1", "Cliente Teste");
+        var filial = new FilialExternalDto("10", "Filial Teste");
+
+        var request = new VendaRequestDto(cliente, filial, Collections.emptyList());
+
+        Venda venda = mock(Venda.class);
+        when(venda.getItens()).thenReturn(Collections.emptyList());
+        when(vendaMapper.toEntity(any(), anyString())).thenReturn(venda);
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> vendaService.criarVenda(request)
+        );
+
+        assertEquals("Venda deve conter pelo menos um item", exception.getMessage());
+
+        verify(vendaRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
     void buscarPorNumero_deveRetornarVenda() {
         Venda venda = vendaMock();
         when(vendaRepository.findByNumeroVenda("VD-123")).thenReturn(Optional.of(venda));
@@ -142,5 +164,103 @@ class VendaServiceTest {
         assertNotNull(response);
         verify(vendaRepository).save(venda);
         verify(eventPublisher).publish(any(VendaEvents.ItemCancelado.class));
+    }
+
+    @Test
+    @DisplayName("buscarPorNumero deve lançar exceção quando venda não for encontrada")
+    void buscarPorNumero_vendaNaoEncontrada_deveLancarExcecao() {
+        String numeroVenda = "VD-999";
+
+        when(vendaRepository.findByNumeroVenda(numeroVenda)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> vendaService.buscarPorNumero(numeroVenda));
+
+        assertEquals("Venda não encontrada: " + numeroVenda, exception.getMessage());
+
+        verify(vendaMapper, never()).toDto(any());
+    }
+
+    @Test
+    @DisplayName("cancelarVenda deve lançar exceção quando venda não for encontrada")
+    void cancelarVenda_vendaNaoEncontrada_deveLancarExcecao() {
+        String numeroVenda = "VD-999";
+
+        when(vendaRepository.findByNumeroVenda(numeroVenda)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> vendaService.cancelarVenda(numeroVenda));
+
+        assertEquals("Venda não encontrada: " + numeroVenda, exception.getMessage());
+
+        verify(vendaRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
+    @DisplayName("cancelarItem deve lançar exceção quando venda não for encontrada")
+    void cancelarItem_vendaNaoEncontrada_deveLancarExcecao() {
+        String numeroVenda = "VD-999";
+        Long itemId = 1L;
+
+        when(vendaRepository.findByNumeroVenda(numeroVenda)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> vendaService.cancelarItem(numeroVenda, itemId));
+
+        assertEquals("Venda não encontrada: " + numeroVenda, exception.getMessage());
+
+        verify(vendaRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
+    @DisplayName("cancelarItem deve lançar exceção quando item não for encontrado na venda")
+    void cancelarItem_itemNaoEncontrado_deveLancarExcecao() {
+        String numeroVenda = "VD-123";
+        Long itemId = 999L;
+
+        ItemVenda itemExistente = mock(ItemVenda.class);
+        when(itemExistente.getId()).thenReturn(1L);
+
+        Venda venda = mock(Venda.class);
+        when(venda.getItens()).thenReturn(List.of(itemExistente));
+        when(vendaRepository.findByNumeroVenda(numeroVenda)).thenReturn(Optional.of(venda));
+
+        RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> vendaService.cancelarItem(numeroVenda, itemId));
+
+        assertEquals("Item não encontrado: " + itemId, exception.getMessage());
+
+        verify(vendaRepository, never()).save(any());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
+    @DisplayName("gerarNumeroVenda deve gerar novo número se já existir no repositório")
+    void gerarNumeroVenda_deveGerarNovoNumeroSeJaExistir() {
+        when(vendaRepository.existsByNumeroVenda(anyString()))
+                .thenReturn(true)
+                .thenReturn(false);
+
+        var cliente = new ClientExternalDto("1", "Cliente Teste");
+        var filial = new FilialExternalDto("10", "Filial Teste");
+        var item = new ItemVendaRequestDto(new ProdutoDto("156", "Teste"), 2, BigDecimal.valueOf(50));
+        var request = new VendaRequestDto(cliente, filial, List.of(item));
+
+        Venda venda = vendaMock();
+        when(vendaMapper.toEntity(any(), anyString())).thenReturn(venda);
+        when(vendaRepository.save(venda)).thenReturn(venda);
+        when(vendaMapper.toDto(venda)).thenReturn(vendaResponseMock());
+
+        VendaResponseDto response = vendaService.criarVenda(request);
+
+        assertNotNull(response);
+
+        verify(vendaRepository, atLeast(2)).existsByNumeroVenda(anyString());
     }
 }

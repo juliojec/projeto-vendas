@@ -8,6 +8,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -80,6 +83,27 @@ class PerformanceAspectTest {
                 eq("repository_method_time"),
                 any(String[].class));
     }
+
+    @Test
+    void monitorRepository_deveLogarSlowQuery() throws Throwable {
+        when(joinPoint.proceed()).thenAnswer(invocation -> {
+            Thread.sleep(150);
+            return "resultado";
+        });
+
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+
+        Object result = aspect.monitorRepository(joinPoint);
+
+        System.setOut(originalOut);
+
+        assert result.equals("resultado");
+        String output = outContent.toString();
+        assert output.contains("SLOW QUERY DETECTED");
+    }
+
 
     @Test
     void deveMonitorarService_comSucesso() throws Throwable {

@@ -76,6 +76,22 @@ class EventPublisherTest {
     }
 
     @Test
+    @DisplayName("publish deve capturar exceção de logCompraEfetuada")
+    void deveCobrirCatchDoPublish() {
+        var evento = new VendaEvents.CompraEfetuada(
+                "VD-123", "C001", "João",
+                BigDecimal.valueOf(150), 3);
+
+        doThrow(new RuntimeException("Falha simulada")).when(metricsService)
+                .incrementCounter(anyString(), any(), any());
+
+        publisher.publish(evento);
+
+        verify(metricsService).incrementCounter("vendas_eventos_total", "evento", "criada");
+    }
+
+
+    @Test
     void deveTratarErroAoPublicar() {
         Object evento = Mockito.mock(Object.class);
 

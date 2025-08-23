@@ -43,8 +43,7 @@ class VendaMapperTest {
         assertThat(venda.getClienteNome()).isEqualTo("Cliente Teste");
         assertThat(venda.getItens()).hasSize(2);
 
-        // Verifica valor total
-        BigDecimal totalEsperado = new BigDecimal("200.00"); // 2*50 + 1*100
+        BigDecimal totalEsperado = new BigDecimal("200.00");
         assertThat(venda.calcularValorTotal()).isEqualByComparingTo(totalEsperado);
     }
 
@@ -68,4 +67,45 @@ class VendaMapperTest {
         assertThat(dto.status()).isEqualTo(StatusVenda.ATIVA);
         assertThat(dto.totalItens()).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("toEntity(VendaRequestDto) deve lançar IllegalArgumentException quando dto for nulo")
+    void toEntityVendaRequestDtoNulo() {
+        assertThatThrownBy(() -> mapper.toEntity((VendaRequestDto) null, "VD-001"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("VendaRequestDto não pode ser nulo");
+    }
+
+    @Test
+    @DisplayName("toDto(Venda) deve lançar IllegalArgumentException quando venda for nula")
+    void toDtoVendaNula() {
+        assertThatThrownBy(() -> mapper.toDto((Venda) null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Venda não pode ser nula");
+    }
+
+    @Test
+    @DisplayName("toEntity(ItemVendaRequestDto) deve lançar IllegalArgumentException quando dto for nulo")
+    void toEntityItemVendaRequestDtoNulo() throws Exception {
+        var method = VendaMapper.class.getDeclaredMethod("toEntity", ItemVendaRequestDto.class);
+        method.setAccessible(true);
+
+        assertThatThrownBy(() -> method.invoke(mapper, (ItemVendaRequestDto) null))
+                .hasCauseInstanceOf(IllegalArgumentException.class)
+                .extracting(Throwable::getCause)
+                .hasFieldOrPropertyWithValue("message", "ItemVendaRequestDto não pode ser nulo");
+    }
+
+    @Test
+    @DisplayName("toDto(ItemVenda) deve lançar IllegalArgumentException quando item for nulo")
+    void toDtoItemVendaNulo() throws Exception {
+        var method = VendaMapper.class.getDeclaredMethod("toDto", ItemVenda.class);
+        method.setAccessible(true);
+
+        assertThatThrownBy(() -> method.invoke(mapper, (ItemVenda) null))
+                .hasCauseInstanceOf(IllegalArgumentException.class)
+                .extracting(Throwable::getCause)
+                .hasFieldOrPropertyWithValue("message", "ItemVenda não pode ser nulo");
+    }
+
 }

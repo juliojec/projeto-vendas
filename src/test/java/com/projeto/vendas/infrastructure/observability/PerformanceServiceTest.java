@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 
 @DisplayName("Deve Testar a Classe Performance Service")
 class PerformanceServiceTest {
@@ -81,4 +82,17 @@ class PerformanceServiceTest {
         assertThat(first).isSameAs(second);
         assertThat(second.count()).isEqualTo(2.0);
     }
+
+    @Test
+    void devePararTimerSemTags() {
+        Timer.Sample sample = performanceService.startTimer();
+
+        performanceService.stopTimer(sample, "service_time");
+
+        Timer timer = meterRegistry.find("service_time").timer();
+
+        assertThat(timer).isNotNull();
+        assertThat(timer.count()).isEqualTo(1);
+    }
+
 }
