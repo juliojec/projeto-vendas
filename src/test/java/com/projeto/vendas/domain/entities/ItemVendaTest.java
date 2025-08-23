@@ -62,4 +62,11 @@ class ItemVendaTest {
         item.cancelar();
         assertTrue(item.getCancelado());
     }
+
+    @Test
+    void deveLancarExcecaoParaQuantidadeNula() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> new ItemVenda("P008", "Produto 8", null, BigDecimal.TEN));
+        assertEquals("Quantidade deve ser maior que zero", ex.getMessage());
+    }
 }

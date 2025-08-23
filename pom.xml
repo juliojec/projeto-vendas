@@ -145,6 +145,7 @@
 						<configuration>
 							<excludes>
 								<exclude>com/projeto/vendas/Application*</exclude>
+								<exclude>com/projeto/vendas/web/controllers/HealthController*</exclude>
 							</excludes>
 						</configuration>
                     </execution>
