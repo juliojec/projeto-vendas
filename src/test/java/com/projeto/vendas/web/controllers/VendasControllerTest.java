@@ -6,10 +6,15 @@ import com.projeto.vendas.domain.services.VendaService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -56,6 +61,23 @@ class VendasControllerTest {
     }
 
     @Test
+    void listarVendas_deveRetornarOk() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<VendaResponseDto> pageMock = new PageImpl<>(Collections.singletonList(vendaMock()));
+
+        when(vendaService.listarVendas(pageable)).thenReturn(pageMock);
+
+        ResponseEntity<Page<VendaResponseDto>> response = controller.listarVendas(pageable);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(1, response.getBody().getTotalElements());
+        assertEquals("VD-123", response.getBody().getContent().get(0).numeroVenda());
+
+        verify(vendaService, times(1)).listarVendas(pageable);
+    }
+
+    @Test
     void buscarVenda_deveRetornarOk() {
         when(vendaService.buscarPorNumero("VD-123")).thenReturn(vendaMock());
 
@@ -74,4 +96,73 @@ class VendasControllerTest {
         assertEquals(200, response.getStatusCodeValue());
         assertEquals("VD-123", response.getBody().numeroVenda());
     }
+
+    @Test
+    void cancelarItem_deveRetornarOk() {
+        Long itemId = 1L;
+        String numeroVenda = "VD-123";
+
+        when(vendaService.cancelarItem(numeroVenda, itemId)).thenReturn(vendaMock());
+
+        ResponseEntity<VendaResponseDto> response = controller.cancelarItem(numeroVenda, itemId);
+
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("VD-123", response.getBody().numeroVenda());
+
+        verify(vendaService, times(1)).cancelarItem(numeroVenda, itemId);
+    }
+
+    @Test
+    @DisplayName("criarVenda deve retornar BadRequest quando ocorrer exceção")
+    void criarVenda_deveRetornarBadRequest_quandoException() {
+        VendaRequestDto request = new VendaRequestDto(
+                new ClientExternalDto("1", "Cliente"),
+                new FilialExternalDto("10", "Filial"),
+                List.of(new ItemVendaRequestDto(new ProdutoDto("1", "Produto"), 2, BigDecimal.valueOf(50))));
+
+        when(vendaService.criarVenda(request)).thenThrow(new RuntimeException("Erro simulado"));
+
+        ResponseEntity<VendaResponseDto> response = controller.criarVenda(request);
+
+        assertEquals(400, response.getStatusCodeValue());
+        assertEquals(null, response.getBody());
+    }
+
+    @Test
+    @DisplayName("buscarVenda deve retornar NotFound quando ocorrer RuntimeException")
+    void buscarVenda_deveRetornarNotFound_quandoRuntimeException() {
+        String numeroVenda = "VD-123";
+        when(vendaService.buscarPorNumero(numeroVenda)).thenThrow(new RuntimeException("Erro simulado"));
+
+        ResponseEntity<VendaResponseDto> response = controller.buscarVenda(numeroVenda);
+
+        assertEquals(404, response.getStatusCodeValue());
+        assertEquals(null, response.getBody());
+    }
+
+    @Test
+    @DisplayName("cancelarVenda deve retornar BadRequest quando ocorrer Exception")
+    void cancelarVenda_deveRetornarBadRequest_quandoException() {
+        String numeroVenda = "VD-123";
+        when(vendaService.cancelarVenda(numeroVenda)).thenThrow(new RuntimeException("Erro simulado"));
+
+        ResponseEntity<VendaResponseDto> response = controller.cancelarVenda(numeroVenda);
+
+        assertEquals(400, response.getStatusCodeValue());
+        assertEquals(null, response.getBody());
+    }
+
+    @Test
+    @DisplayName("cancelarItem deve retornar BadRequest quando ocorrer Exception")
+    void cancelarItem_deveRetornarBadRequest_quandoException() {
+        String numeroVenda = "VD-123";
+        Long itemId = 1L;
+        when(vendaService.cancelarItem(numeroVenda, itemId)).thenThrow(new RuntimeException("Erro simulado"));
+
+        ResponseEntity<VendaResponseDto> response = controller.cancelarItem(numeroVenda, itemId);
+
+        assertEquals(400, response.getStatusCodeValue());
+        assertEquals(null, response.getBody());
+    }
+
 }
